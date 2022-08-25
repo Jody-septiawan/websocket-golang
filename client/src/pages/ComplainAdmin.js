@@ -31,97 +31,79 @@ export default function ComplainAdmin() {
   const [state] = useContext(UserContext);
 
   useEffect(() => {
-    // socket = io("http://localhost:5000");
-
-    socket = new WebSocket.w3cwebsocket("ws://localhost:8080/ws");
+    socket = new WebSocket.w3cwebsocket("ws://localhost:8080/ws", "", "", {
+      OutgoingHttpHeader: `Bearer ${localStorage.token}`,
+    });
 
     socket.onopen = function () {
-      socket.send(
-        JSON.stringify({
-          event: "customer contacts",
-        })
-      );
+      console.log("Client connect to Server Socket");
+
+      loadContacts();
+
       socket.onmessage = (res) => {
         res = JSON.parse(res.data);
         if (res.event == "customer contacts") {
-          console.log(res.data);
-          setContacts(res.data);
+          const data = res.data.map((item) => ({
+            ...item,
+            message:
+              item.chats.length > 0
+                ? item.chats[item.chats.length - 1].message
+                : "Click here to start message",
+          }));
+          setContacts(data);
+        } else if (res.event == "messages") {
+          setMessages(res.data);
+        } else if (res.event == "new message") {
+          loadMessages();
+          // loadContacts();
         }
       };
+
+      if (contact != null) {
+        loadMessages();
+      }
     };
-
-    // ===========================================
-
-    // define listener for every updated message
-    // socket.on("new message", () => {
-    //   console.log("contact", contact);
-    //   socket.emit("load messages", contact?.id);
-    // });
-
-    // loadContacts();
-    // loadMessages();
-
-    return () => {
-      // socket.disconnect();
-    };
-  }, [messages]);
-
-  // const loadContacts = () => {
-  // socket.emit("load customer contacts");
-  // socket.on("customer contacts", (data) => {
-  // filter just customers which have sent a message
-  // let dataContacts = data.filter(
-  //   (item) =>
-  //     item.status !== "admin" &&
-  //     (item.recipientMessage.length > 0 || item.senderMessage.length > 0)
-  // );
-
-  // // manipulate customers to add message property with the newest message
-  // dataContacts = dataContacts.map((item) => ({
-  //   ...item,
-  //   message:
-  //     item.senderMessage.length > 0
-  //       ? item.senderMessage[item.senderMessage.length - 1].message
-  //       : "Click here to start message",
-  // }));
-  // setContacts(dataContacts);
-  // });
-  // };
+  }, [contact]);
 
   // used for active style when click contact
   const onClickContact = (data) => {
     setContact(data);
-    // emit event load messages
-    socket.emit("load messages", data.id);
   };
 
-  // const loadMessages = () => {
-  //   // define event listener for "messages"
-  //   socket.on("messages", (data) => {
-  //     // get data messages
-  //     if (data.length > 0) {
-  //       const dataMessages = data.map((item) => ({
-  //         idSender: item.sender.id,
-  //         message: item.message,
-  //       }));
-  //       setMessages(dataMessages);
-  //     }
-  //     loadContacts();
-  //     const chatMessagesElm = document.getElementById("chat-messages");
-  //     chatMessagesElm.scrollTop = chatMessagesElm?.scrollHeight;
-  //   });
-  // };
+  const loadContacts = () => {
+    socket.send(
+      JSON.stringify({
+        event: "customer contacts",
+        senderId: state.user.id,
+      })
+    );
+  };
+
+  const loadMessages = () => {
+    console.log("contact?.id : ", contact);
+    console.log("state: ", state);
+
+    socket.send(
+      JSON.stringify({
+        event: "messages",
+        senderId: state.user.id,
+        recipientId: contact?.id,
+      })
+    );
+  };
 
   const onSendMessage = (e) => {
     // listen only enter key event press
     if (e.key === "Enter") {
-      const data = {
-        idRecipient: contact.id,
-        message: e.target.value,
-      };
-
       //emit event send message
-      socket.emit("send message", data);
+      socket.send(
+        JSON.stringify({
+          event: "send message",
+          senderId: state.user.id,
+          recipientId: contact.id,
+          message: e.target.value,
+        })
+      );
       e.target.value = "";
     }
   };

@@ -10,8 +10,9 @@ type User struct {
 	Status    	string                	`json:"status" gorm:"type: varchar(50)"`
 	Profile   	ProfileResponse       	`json:"profile"`
 	Products  	[]ProductUserResponse 	`json:"products" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	Sender      []ChatSenderResponse	`json:"sender"  gorm:"foreignkey:SenderID"`
-	Recipient   []ChatRecipientResponse	`json:"recipient"  gorm:"foreignkey:RecipientID"`
+	// Sender      []ChatSenderResponse	`json:"sender"  gorm:"foreignkey:SenderID"`
+	// Recipient   []ChatRecipientResponse	`json:"recipient"  gorm:"foreignkey:RecipientID"`
+	Chat		[]Chat					`json:"chats" gorm:"foreignkey:SenderID"`
 	CreatedAt 	time.Time             	`json:"-"`
 	UpdatedAt 	time.Time             	`json:"-"`
 }
