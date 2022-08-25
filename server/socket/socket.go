@@ -56,8 +56,8 @@ func reader(conn *websocket.Conn) {
 			var chats []models.Chat
 
 			// var err error
-			err := database.DB.Preload("Profile").Preload("Sender").Preload("Recipient").Find(&users, "status = ?", "customer").Error
-			// err := database.DB.Preload("Profile").Find(&users, "status = ?", "customer").Error
+			// err := database.DB.Preload("Profile").Preload("Sender").Preload("Recipient").Find(&users, "status = ?", "customer").Error
+			err := database.DB.Preload("Profile").Preload("Sender").Find(&users, "status = ?", "customer").Error
 			if err != nil {
 				log.Println(err)
 				return
